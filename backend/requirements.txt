@@ -1,0 +1,7 @@
+Flask
+flask-cors==5.0.0
+Gunicorn
+Supabase
+python-dotenv
+tensorflow==2.18.0
+numpy==2.0.2
