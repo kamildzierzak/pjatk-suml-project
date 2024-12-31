@@ -27,7 +27,7 @@ def main():
     st.title("🌌 Rozpoznawanie Konstelacji")
     st.write("""
     Prześlij zdjęcie nieba z widocznymi konstelacjami, aby dowiedzieć się, jaka to konstelacja. 
-    Obecnie obsługujemy zdjęcia w formatach JPG i PNG.
+    Obecnie obsługujemy zdjęcia w formatach JPG, JPEG i PNG.
     """)
 
     # Sekcja przesyłania obrazu
@@ -38,7 +38,7 @@ def main():
 
     if uploaded_file is not None:
         # Wyświetlenie przesłanego obrazu
-        st.image(uploaded_file, caption="Przesłane zdjęcie", use_column_width=True)
+        st.image(uploaded_file, caption="Przesłane zdjęcie", use_container_width=True)
 
         # Przycisk do uruchomienia przewidywania (logika backendu do dodania później)
         if st.button("Rozpoznaj konstelację"):
