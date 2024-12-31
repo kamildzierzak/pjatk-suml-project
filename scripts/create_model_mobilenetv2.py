@@ -1,27 +1,54 @@
+import os
 import tensorflow as tf
+import matplotlib.pyplot as plt
 from tensorflow.keras import layers, models
 from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
+def add_progress_visualization():
+    """
+    This function plots the training and validation accuracy and loss over epochs to visualize the progress during training.
+    """
+    # Plot for training and validation accuracy
+    plt.plot(history.history['accuracy'], label='Training accuracy')
+    plt.plot(history.history['val_accuracy'], label='Validation accuracy')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.title('Training and validation accuracy')
+    plt.legend()
+    plt.show()
+
+    # Plot for training and validation loss
+    plt.plot(history.history['loss'], label='Training loss')
+    plt.plot(history.history['val_loss'], label='Validation loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.title('Training and validation loss')
+    plt.legend()
+    plt.show()
+
 if __name__=='__main__':
+    data_dir = os.path.abspath("data/constellations");
+    output_dir = os.path.abspath("models")
+
+    # Parametry dla rozmiaru obrazu i batch size
     img_height = 224
     img_width = 224
-    batch_size = 6
+    batch_size = 16
     num_classes = 88
-    epochs = 30
+    epochs = 32
 
-    data_dir = "constellations"
-
+    # Augmentacja danych dla zbioru treningowego
     train_datagen = ImageDataGenerator(
-        rescale=1. / 255,
+        rescale=1. / 255, # Normalizacja pikseli do zakresu [0, 1]
         rotation_range=20,
         width_shift_range=0.2,
         height_shift_range=0.2,
         shear_range=0.2,
         zoom_range=0.2,
         horizontal_flip=True,
-        fill_mode='nearest',
+        fill_mode='nearest', # Uzupełnianie pikseli po transformacji
         validation_split=0.2  # Ustalanie 20% danych na walidację
     )
 
@@ -31,8 +58,8 @@ if __name__=='__main__':
     # Wczytanie danych treningowych
     train_generator = train_datagen.flow_from_directory(
         data_dir,
-        target_size=(224, 224),  # Rozmiar obrazów
-        batch_size=8,
+        target_size=(img_height, img_width),  # Rozmiar obrazów
+        batch_size=batch_size,
         class_mode='sparse',
         subset='training'  # Używamy 80% danych na trening
     )
@@ -40,23 +67,25 @@ if __name__=='__main__':
     # Wczytanie danych walidacyjnych
     validation_generator = train_datagen.flow_from_directory(
         data_dir,
-        target_size=(224, 224),
-        batch_size=8,
+        target_size=(img_height, img_width),
+        batch_size=batch_size,
         class_mode='sparse',
         subset='validation'
     )
 
-    # Używamy danych testowych (bez augmentacji, tylko normalizacja)
+    # Wczytanie danych testowych (bez augmentacji, tylko normalizacja)
     test_generator = test_datagen.flow_from_directory(
         data_dir,
-        target_size=(224, 224),  # Rozmiar obrazów
-        batch_size=8,
+        target_size=(img_height, img_width),  # Rozmiar obrazów
+        batch_size=batch_size,
         class_mode='sparse'
     )
 
+    # Wczytanie pretrenowanego modelu MobileNetV2
     base_model = MobileNetV2(input_shape=(img_height, img_width, 3), include_top=False, weights='imagenet')
     base_model.trainable = False  # Zamrożenie warstw pretrenowanego modelu
 
+    # Budowa modelu
     model = models.Sequential([
         base_model,
         layers.GlobalAveragePooling2D(),  # Warstwa agregacji cech
@@ -65,18 +94,21 @@ if __name__=='__main__':
         layers.Dense(num_classes, activation='softmax')  # Warstwa wyjściowa
     ])
 
+    # Kompilacja modelu
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=0.0001),  # Mała szybkość uczenia
         loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),  # Funkcja straty
         metrics=['accuracy']
     )
 
+    # Callbacki
     early_stopping = EarlyStopping(
         monitor='val_loss',
         patience=5,  # Zatrzymaj trening, jeśli walidacyjna strata nie poprawi się przez 5 epok
         restore_best_weights=True  # Przywróć najlepszą wagę modelu
     )
 
+    # Uczenie modelu
     history = model.fit(
         train_generator,
         epochs=epochs,
@@ -84,6 +116,7 @@ if __name__=='__main__':
         callbacks=[early_stopping]
     )
 
+    # Dostrojenie (fine-tuning) pretrenowanego modelu
     base_model.trainable = True  # Odblokowanie warstw pretrenowanego modelu
     fine_tune_at = 100  # Odmrożenie warstw od 100-tej warstwy
 
@@ -98,7 +131,7 @@ if __name__=='__main__':
         metrics=['accuracy']
     )
 
-    # Fine-tuning modelu
+    # Dostojenie (fine-tuning) modelu z nowym learning rate
     history_fine = model.fit(
         train_generator,
         epochs=epochs,
@@ -106,5 +139,10 @@ if __name__=='__main__':
         callbacks=[early_stopping]
     )
 
+    # Wizualizacja postępu uczenia
+    add_progress_visualization()
+
     # Zapisanie modelu
-    model.save('star_constellation_model.h5')
+    model.save(os.path.join(output_dir, "mobilenetv2_model.h5"))
+
+    # TODO - Prawdopodobnie powinniśmy jeszcze ewaluować model na danych testowych
