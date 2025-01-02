@@ -5,7 +5,10 @@ import numpy as np
 
 @st.cache_resource
 def load_model():
-    model = tf.keras.models.load_model("models/cnn_model.h5")
+    # model = tf.keras.models.load_model("models/best_resnet50_based_model.keras")
+    # model = tf.keras.models.load_model("models/best_fined_tuned_resnet50_based_model.keras")
+    model = tf.keras.models.load_model("models/constellation_recognition_model_fine_tuned.keras")
+    # model = tf.keras.models.load_model("models/cnn_model.h5")
     # model = tf.keras.models.load_model("/models/mobilenetv2_model.h5")
     return model
 

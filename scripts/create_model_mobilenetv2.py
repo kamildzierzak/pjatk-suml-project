@@ -5,28 +5,7 @@ from tensorflow.keras import layers, models
 from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-
-def add_progress_visualization():
-    """
-    This function plots the training and validation accuracy and loss over epochs to visualize the progress during training.
-    """
-    # Plot for training and validation accuracy
-    plt.plot(history.history['accuracy'], label='Training accuracy')
-    plt.plot(history.history['val_accuracy'], label='Validation accuracy')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-    plt.title('Training and validation accuracy')
-    plt.legend()
-    plt.show()
-
-    # Plot for training and validation loss
-    plt.plot(history.history['loss'], label='Training loss')
-    plt.plot(history.history['val_loss'], label='Validation loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('Loss')
-    plt.title('Training and validation loss')
-    plt.legend()
-    plt.show()
+from visualization import add_progress_visualization
 
 if __name__=='__main__':
     data_dir = os.path.abspath("data/constellations");
@@ -140,7 +119,7 @@ if __name__=='__main__':
     )
 
     # Wizualizacja postępu uczenia
-    add_progress_visualization()
+    add_progress_visualization(history)
 
     # Zapisanie modelu
     model.save(os.path.join(output_dir, "mobilenetv2_model.h5"))
