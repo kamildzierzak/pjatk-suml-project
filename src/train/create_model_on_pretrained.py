@@ -16,7 +16,7 @@ IMG_SIZE = 224
 BATCH_SIZE = 12
 EPOCHS = 16
 EPOCHS_FINE_TUNE = 8
-DATA_DIR = 'data/constellations'
+DATA_DIR = os.path.abspath("data/constellations")
 OUTPUT_DIR = os.path.abspath("models")
 
 # Choose your backbone: 'resnet', 'mobilenet', or 'efficientnet'

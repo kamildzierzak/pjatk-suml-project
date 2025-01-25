@@ -1,7 +1,8 @@
 import streamlit as st
 import tensorflow as tf
-from tensorflow.keras.preprocessing import image
 import numpy as np
+
+from tensorflow.keras.preprocessing import image
 
 @st.cache_resource
 def load_model():

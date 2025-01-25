@@ -1,5 +1,13 @@
 import os
 
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+DATA_DIR = os.path.join(PROJECT_ROOT, "data")
+CONSTELLATIONS_DIR = os.path.join(DATA_DIR, "constellations")
+STELLARIUM_RAW_DIR = os.path.join(DATA_DIR, "stellarium_raw")
+
+MODELS_DIR = os.path.join(PROJECT_ROOT, "models")
+
 # Lista konstelacji: łacińska nazwa, skrót łaciński, polska nazwa
 # https://teleskopy.pl/gwiazdozbiory.html
 constellations = [
@@ -93,13 +101,4 @@ constellations = [
     ("Vulpecula", "Vul", "Lis (Lisek)")
 ]
 
-base_path = "./constellations"
-
-os.makedirs(base_path, exist_ok=True)
-
-for latin_name, abbreviation, polish_name in constellations:
-    folder_name = f"{latin_name}({polish_name})"
-    folder_path = os.path.join(base_path, folder_name)
-    os.makedirs(folder_path, exist_ok=True)
-
-print(f"Utworzono foldery dla {len(constellations)} konstelacji w folderze '{base_path}'!")
+CLASS_NAMES = [constellation[0] for constellation in constellations]

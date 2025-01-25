@@ -1,7 +1,8 @@
 import os
 
+from config import STELLARIUM_RAW_DIR
+
 def rename_files(folder_path, start_number):
-    folder_path = os.path.abspath(folder_path)
     print(f"Processing files in folder: {folder_path}")
 
     files = sorted(os.listdir(folder_path))
@@ -28,7 +29,6 @@ def rename_files(folder_path, start_number):
             print(f"Renamed: {file} -> {new_name}")
             current_number += 1
 
-folder_path = os.path.join(os.path.dirname(__file__), "../data/stellarium")
 start_number = 100
 
-rename_files(folder_path, start_number)
+rename_files(STELLARIUM_RAW_DIR, start_number)

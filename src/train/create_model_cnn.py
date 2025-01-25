@@ -1,6 +1,7 @@
 import os
 import tensorflow as tf
 import matplotlib.pyplot as plt
+
 from tensorflow.keras import layers, models
 from tensorflow.keras.callbacks import EarlyStopping
 from visualization import add_progress_visualization
