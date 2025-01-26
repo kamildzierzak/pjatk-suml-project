@@ -1,4 +1,5 @@
 Flask
+flask-cors==5.0.0
 Gunicorn
 Supabase
 python-dotenv

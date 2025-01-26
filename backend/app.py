@@ -4,6 +4,7 @@ import time
 import logging
 
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from supabase import create_client, Client
 from werkzeug.utils import secure_filename
 
@@ -13,6 +14,9 @@ from werkzeug.utils import secure_filename
 # load_dotenv()
 
 app = Flask(__name__)
+
+# Enable CORS
+CORS(app, resources={r"/*": {"origins": ["http://localhost:5173"]}})
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
