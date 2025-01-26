@@ -10,4 +10,4 @@ class Config:
     SUPABASE_KEY = os.getenv("SUPABASE_KEY")
     BUCKET_NAME = "images"
     TABLE_NAME = "predictions"
-    ALLOWED_ORIGINS = ["http://localhost:5173"]
+    ALLOWED_ORIGINS = ["http://localhost:5173", "https://resonant-chaja-d637bc.netlify.app"]
