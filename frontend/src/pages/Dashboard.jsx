@@ -71,15 +71,14 @@ const Dashboard = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
 
-    if (!file) {
+    if (file && file.type.startsWith("image/")) {
+      setSelectedFile(file);
+      const objectUrl = URL.createObjectURL(file);
+      setPreviewUrl(objectUrl);
+    } else {
       setSelectedFile(null);
       setPreviewUrl(null);
-      return;
     }
-
-    setSelectedFile(file);
-    const objectUrl = URL.createObjectURL(file);
-    setPreviewUrl(objectUrl);
   };
 
   const handlePredict = async (e) => {
@@ -100,6 +99,7 @@ const Dashboard = () => {
         method: "POST",
         body: formData,
       });
+
       const data = await res.json();
       setPredictionResult(data.label || "Brak wyniku");
       fetchHistory();
@@ -167,7 +167,7 @@ const Dashboard = () => {
                 type="file"
                 id="file"
                 name="file"
-                accept=".jpg,.jpeg,.png"
+                accept="image/jpeg, image/png"
                 onChange={handleFileChange}
               />
             </div>
