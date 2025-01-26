@@ -247,7 +247,7 @@ const Dashboard = () => {
                       <span className="col-span-2">
                         <button
                           onClick={() => handleDelete(item.id)}
-                          className="rounded bg-red-500 p-2 text-white hover:bg-red-700"
+                          className="rounded bg-red-500 p-2 text-white hover:cursor-pointer hover:bg-red-700"
                         >
                           Usuń
                         </button>
