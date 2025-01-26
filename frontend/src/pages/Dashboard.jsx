@@ -3,35 +3,36 @@ import { useEffect, useState } from "react";
 import LogoutButton from "../components/LogoutButton";
 import Spinner from "../components/Spinner";
 
-import constellation1 from "../assets/constellation_1.jpg";
-import constellation2 from "../assets/constellation_2.jpg";
-import constellation3 from "../assets/constellation_3.jpg";
-const mockHistory = [
-  {
-    id: 1,
-    filename: "constellation_1.jpg",
-    file_url: constellation1,
-    created_at: "2023-08-15T10:00:00Z",
-    label: "Orion",
-  },
-  {
-    id: 2,
-    filename: "constellation_2.jpg",
-    file_url: constellation2,
-    created_at: "2023-08-15T10:30:00Z",
-    label: "Cassiopeia",
-  },
-  {
-    id: 3,
-    filename: "constellation_3.jpg",
-    file_url: constellation3,
-    created_at: "2023-08-15T11:15:00Z",
-    label: "Ursa Major",
-  },
-];
+// import constellation1 from "../assets/constellation_1.jpg";
+// import constellation2 from "../assets/constellation_2.jpg";
+// import constellation3 from "../assets/constellation_3.jpg";
+// const mockHistory = [
+//   {
+//     id: 1,
+//     filename: "constellation_1.jpg",
+//     file_url: constellation1,
+//     created_at: "2023-08-15T10:00:00Z",
+//     label: "Orion",
+//   },
+//   {
+//     id: 2,
+//     filename: "constellation_2.jpg",
+//     file_url: constellation2,
+//     created_at: "2023-08-15T10:30:00Z",
+//     label: "Cassiopeia",
+//   },
+//   {
+//     id: 3,
+//     filename: "constellation_3.jpg",
+//     file_url: constellation3,
+//     created_at: "2023-08-15T11:15:00Z",
+//     label: "Ursa Major",
+//   },
+// ];
 
 const Dashboard = () => {
   const { user, isAuthenticated, isLoading } = useAuth0();
+  const BASE_URL = "https://pjatk-suml-project-backend.onrender.com/api";
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -87,9 +88,6 @@ const Dashboard = () => {
     if (!selectedFile) return;
 
     try {
-      setTimeout(() => {
-        console.log("Predicting...");
-      }, 1000);
       setPredictionLoading(true);
       setPredictionResult("");
 
@@ -98,13 +96,12 @@ const Dashboard = () => {
       formData.append("user_id", user.sub);
       formData.append("model_id", "cnn");
 
-      const res = await fetch("http://localhost:5000/predict", {
+      const res = await fetch(`${BASE_URL}/predict`, {
         method: "POST",
         body: formData,
       });
       const data = await res.json();
       setPredictionResult(data.label || "Brak wyniku");
-
       fetchHistory();
     } catch (err) {
       console.error(err);
@@ -118,12 +115,10 @@ const Dashboard = () => {
     setLoadingHistory(true);
 
     try {
-      // const res = await fetch(
-      //   `http://localhost:5000/history?user_id=${user.sub}`,
-      // );
-      // const data = await res.json();
-      // setHistory(data);
-      setHistory(mockHistory);
+      const res = await fetch(`${BASE_URL}/history?user_id=${user.sub}`);
+      const data = await res.json();
+      setHistory(data);
+      // setHistory(mockHistory);
     } catch (err) {
       console.error(err);
     }
@@ -132,7 +127,7 @@ const Dashboard = () => {
 
   const handleDelete = async (id) => {
     try {
-      await fetch(`http://localhost:5000/history/${id}`, {
+      await fetch(`${BASE_URL}/history/${id}`, {
         method: "DELETE",
       });
       setHistory((prev) => prev.filter((item) => item.id !== id));
