@@ -1,80 +1,26 @@
 import os
-import random
-import time
 import logging
+import random
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from supabase import create_client, Client
-from werkzeug.utils import secure_filename
+from supabase import create_client
 
-# Testing
-# from dotenv import load_dotenv
+from config import Config
+from services.storage import upload_file_to_storage
+from services.database import insert_prediction, fetch_history, delete_prediction
+from utils.validation import allowed_file
 
-# load_dotenv()
-
+# Setup Flask
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": Config.ALLOWED_ORIGINS}})
 
-# Enable CORS
-CORS(app, resources={r"/*": {"origins": ["http://localhost:5173"]}})
-
-# Set up logging
+# Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-BUCKET_NAME = "images"
-TABLE_NAME = "predictions"
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
-
-sb: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-def allowed_file(filename):
-    """Check if the file has a valid extension."""
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def upload_file_to_storage(file, user_id):
-    """Upload a file to Supabase Storage and return its public URL."""
-    try:
-        # Generate unique filename
-        original_filename = secure_filename(file.filename)
-        unique_name = f"{user_id}_{int(time.time())}_{original_filename}"
-
-        # Upload file to Supabase Storage
-        file_bytes = file.read()
-        upload_res = sb.storage.from_(BUCKET_NAME).upload(
-            unique_name, file_bytes, {"contentType": file.mimetype}
-        )
-        if upload_res.get("error"):
-            logger.error(f"File upload failed: {upload_res['error']}")
-            return None, "File upload failed"
-
-        # Get public URL
-        public_url = sb.storage.from_(BUCKET_NAME).get_public_url(unique_name).get("publicURL")
-        return public_url, None
-    except Exception as e:
-        logger.error(f"Exception during file upload: {e}")
-        return None, "Internal server error during file upload"    
-
-def insert_prediction(user_id, filename, file_url, label):
-    """Insert a prediction record into the database."""
-    try:
-        prediction_data = {
-            "user_id": user_id,
-            "filename": filename,
-            "file_url": file_url,
-            "label": label,
-            "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),
-        }
-        db_res = sb.table(TABLE_NAME).insert(prediction_data).execute()
-        if db_res.error:
-            logger.error(f"Failed to insert prediction: {db_res.error}")
-            return False, "Failed to save prediction"
-        return True, None
-    except Exception as e:
-        logger.error(f"Exception during prediction insertion: {e}")
-        return False, "Internal server error during prediction insertion"
+# Supabase client
+sb = create_client(Config.SUPABASE_URL, Config.SUPABASE_KEY)
 
 @app.route('/')
 def home():
@@ -100,7 +46,7 @@ def predict():
     3. Perform a prediction using the model.
     4. Save prediction details to the database.
     5. Return the prediction result.
-    """
+    """    
     file = request.files.get("image")
     user_id = request.form.get("user_id")
     model_id = request.form.get("model_id", "cnn")
@@ -112,7 +58,7 @@ def predict():
         return jsonify({"error": "Invalid file type. Only JPG, JPEG, PNG allowed."}), 400
 
     # Upload file to storage
-    public_url, error = upload_file_to_storage(file, user_id)
+    public_url, error = upload_file_to_storage(sb, Config.BUCKET_NAME, file, user_id)
     if error:
         return jsonify({"error": error}), 500
 
@@ -121,7 +67,7 @@ def predict():
     label = random.choice(possible_labels)
 
     # Save prediction to database
-    success, error = insert_prediction(user_id, file.filename, public_url, label)
+    success, error = insert_prediction(sb, Config.TABLE_NAME, user_id, file.filename, public_url, label)
     if not success:
         return jsonify({"error": error}), 500
 
@@ -143,12 +89,11 @@ def get_history():
     if not user_id:
         return jsonify({"error": "Missing user_id"}), 400
 
-    try:
-        db_res = sb.table(TABLE_NAME).select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
-        return jsonify(db_res.data)
-    except Exception as e:
-        logger.error(f"Exception during history fetch: {e}")
-        return jsonify({"error": "Failed to fetch history"}), 500
+    history, error = fetch_history(sb, Config.TABLE_NAME, user_id)
+    if error:
+        return jsonify({"error": error}), 500
+
+    return jsonify(history), 200
 
 @app.route("/api/history/<int:pred_id>", methods=["DELETE"])
 def delete_history_item(pred_id):
@@ -161,41 +106,15 @@ def delete_history_item(pred_id):
     3. Remove the file from Supabase Storage.
     4. Delete the record from the database.
     """
-    try:
-        # Fetch prediction record
-        fetch_res = sb.table(TABLE_NAME).select("file_url").eq("id", pred_id).maybe_single().execute()
-        record = fetch_res.data
-        if not record:
-            return jsonify({"error": "Prediction not found"}), 404
+    response, error = delete_prediction(sb, Config.TABLE_NAME, Config.BUCKET_NAME, pred_id)
 
-        # Parse file path
-        file_url = record.get("file_url")
-        file_path = file_url.split(f"/{BUCKET_NAME}/")[1] if f"/{BUCKET_NAME}/" in file_url else None
+    if error:
+        if error == "Prediction not found":
+            return jsonify({"error": error}), 404
+        return jsonify({"error": error}), 500
 
-        # Remove file from storage
-        if file_path:
-            remove_res = sb.storage.from_(BUCKET_NAME).remove([file_path])
-            if remove_res.get("error"):
-                logger.error(f"Failed to delete file from storage: {remove_res['error']}")
-                return jsonify({"error": "Failed to delete file from storage"}), 500
+    return jsonify(response), 200
 
-        # Delete record from database
-        delete_res = sb.table(TABLE_NAME).delete().eq("id", pred_id).execute()
-        if delete_res.error:
-            logger.error(f"Failed to delete prediction record: {delete_res.error}")
-            return jsonify({"error": "Failed to delete prediction record"}), 500
-
-        return jsonify({"success": True})
-    except Exception as e:
-        logger.error(f"Exception during deletion: {e}")
-        return jsonify({"error": "Failed to delete prediction"}), 500
-
-if __name__ == '__main__':
-    """
-    Run the Flask app locally or on Render.
-    Environment Variables:
-    - SUPABASE_URL: Your Supabase project URL.
-    - SUPABASE_KEY: Your Supabase service key.
-    """
-    port = int(os.environ.get("PORT", 5000))
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
