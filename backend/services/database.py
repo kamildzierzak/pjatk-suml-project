@@ -1,6 +1,8 @@
 import time
 import logging
+
 from supabase import Client
+from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -50,19 +52,27 @@ def delete_prediction(sb: Client, table_name: str, bucket_name: str, pred_id: in
 
         record = fetch_res.data
         file_url = record.get("file_url")
-        file_path = file_url.split(f"/{bucket_name}/")[1] if f"/{bucket_name}/" in file_url else None
+        if not file_url:
+            return None, "File URL not found"
+
+        parsed_url = urlparse(file_url)
+        path = parsed_url.path
+        file_path = path.split(f"/{bucket_name}/")[1] if f"/{bucket_name}/" in path else None
+
+        if not file_path:
+            return None, "Invalid file path"
 
         # Remove file from storage
-        if file_path:
-            sb.storage.from_(bucket_name).remove([file_path])
-            logger.info(f"Removed file: {file_path}")
+        remove_res = sb.storage.from_(bucket_name).remove([file_path])
+        logger.debug(f"Remove response: {remove_res}")
 
         # Delete record from database
         delete_res = sb.table(table_name).delete().eq("id", pred_id).execute()
-
         if not delete_res.data or len(delete_res.data) == 0:
+            logger.error(f"Failed to delete prediction record: {delete_res}")
             return None, "Failed to delete prediction record"
 
+        logger.info(f"Successfully deleted prediction record {pred_id}")
         return {"success": True}, None
     except Exception as e:
         logger.error(f"Exception during deletion: {e}")
