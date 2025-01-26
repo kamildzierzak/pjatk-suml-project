@@ -33,6 +33,7 @@ import Spinner from "../components/Spinner";
 const Dashboard = () => {
   const { user, isAuthenticated, isLoading } = useAuth0();
   const BASE_URL = "https://pjatk-suml-project-backend.onrender.com/api";
+  // const BASE_URL = "http://127.0.0.1:5000/api";
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
