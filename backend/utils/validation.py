@@ -1,4 +1,5 @@
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
+
 
 def allowed_file(filename):
     """Check if the file has a valid extension."""

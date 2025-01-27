@@ -3,33 +3,6 @@ import { useEffect, useState } from "react";
 import LogoutButton from "../components/LogoutButton";
 import Spinner from "../components/Spinner";
 
-// import constellation1 from "../assets/constellation_1.jpg";
-// import constellation2 from "../assets/constellation_2.jpg";
-// import constellation3 from "../assets/constellation_3.jpg";
-// const mockHistory = [
-//   {
-//     id: 1,
-//     filename: "constellation_1.jpg",
-//     file_url: constellation1,
-//     created_at: "2023-08-15T10:00:00Z",
-//     label: "Orion",
-//   },
-//   {
-//     id: 2,
-//     filename: "constellation_2.jpg",
-//     file_url: constellation2,
-//     created_at: "2023-08-15T10:30:00Z",
-//     label: "Cassiopeia",
-//   },
-//   {
-//     id: 3,
-//     filename: "constellation_3.jpg",
-//     file_url: constellation3,
-//     created_at: "2023-08-15T11:15:00Z",
-//     label: "Ursa Major",
-//   },
-// ];
-
 const Dashboard = () => {
   const { user, isAuthenticated, isLoading } = useAuth0();
   const BASE_URL = "https://pjatk-suml-project-backend.onrender.com/api";
@@ -102,7 +75,15 @@ const Dashboard = () => {
       });
 
       const data = await res.json();
-      setPredictionResult(data.label || "Brak wyniku");
+      if (data.label) {
+        setPredictionResult({ label: data.label, confidence: data.confidence });
+      } else {
+        setPredictionResult({
+          label: "Brak wyniku",
+          confidence: "100",
+        });
+      }
+
       fetchHistory();
     } catch (err) {
       console.error(err);
@@ -193,7 +174,7 @@ const Dashboard = () => {
               </button>
             )}
           </form>
-          {(predictionLoading || predictionResult) && (
+          {(predictionLoading || predictionResult.label) && (
             <div className="px-2">
               <h3 className="py-2 font-semibold uppercase">Wynik</h3>
               {predictionLoading ? (
@@ -202,7 +183,8 @@ const Dashboard = () => {
                 </p>
               ) : (
                 <p className="rounded border-2 p-2 text-center font-bold sm:w-[360px]">
-                  {predictionResult}
+                  {predictionResult.label} (
+                  {Number(predictionResult.confidence).toFixed(3)}%)
                 </p>
               )}
             </div>

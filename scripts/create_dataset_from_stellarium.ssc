@@ -1,0 +1,167 @@
+
+// Funkcja losująca daty i godziny
+function getRandomDate() {
+    var year = 2000 + Math.floor(Math.random() * 100); // 2000 - 2100
+    var month = Math.floor(Math.random() * 12) + 1; // 1-12
+    var day = Math.floor(Math.random() * 28) + 1;  // 1-28
+    var hour = Math.floor(Math.random() * 24);     // 0-23
+    var minute = Math.floor(Math.random() * 60);  // 0-59
+    var second = Math.floor(Math.random() * 60);  // 0-59
+
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T` +
+           `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
+}
+
+// Funkcja losująca lokalizację na Ziemi
+function getRandomLocation() {
+    var latitude = (Math.random() * 180) - 90;  // Zakres: -90 do +90 stopni
+    var longitude = (Math.random() * 360) - 180; // Zakres: -180 do +180 stopni
+    var altitude = Math.random() * 10000;  // Losowa wysokość: 0 do 10000 m
+    return [ latitude, longitude, altitude ];
+}
+
+
+function generateConstellationScreenshotsWithLinesWithOtherConstellationsVisible(constellation, numberOfShots, zoomLevelBase, invert) {
+	// Pokazuje tylko linie, etykiety lub granice wybranej konstelacji, ale inne gwiazdy wciąż są widoczne.
+	ConstellationMgr.setFlagIsolateSelected(true);
+
+	// Ukrywa wszystkie gwiazdy i obiekty poza wybraną konstelacją i jej gwiazdami.
+	ConstellationMgr.setFlagConstellationPick(false);
+
+	// Wyświetla linie konstelacji
+	ConstellationMgr.setFlagLines(true);
+
+	// Wybieramy konstelację o danej nazwie
+	core.selectConstellationByName(constellation);
+
+	// Skocz do konstelacji (x sekund).
+	core.moveToSelectedObject(1);
+
+	for (shot = 0; shot < numberOfShots; shot++) {
+		var randomDate = getRandomDate();
+		var randomLocation = getRandomLocation();
+		var latitudePos = randomLocation[0];
+		var longitudePos = randomLocation[1];
+		var altitudePos = randomLocation[2];
+
+		// Ustaw lokalizację obserwatora
+		core.setObserverLocation(latitudePos, longitudePos, altitudePos, 0, "RandomLocation", "Earth");
+	
+		// Ustaw datę i godzinę
+		core.setDate(randomDate);
+
+		var zoomLevel = zoomLevelBase + shot * 3; 
+
+		// Ustaw kamerę
+		// Przybliżenie do x stopni w czasie y sekund
+		StelMovementMgr.zoomTo(zoomLevel, 0.5);
+
+		core.wait(0.5);
+
+		// Zapisz zdjęcie do domyślnego katalogu
+		core.screenshot(prefix=constellation + "-", invert=invert, format='png');
+	}
+	
+	ConstellationMgr.deselectConstellation(constellation);
+}
+
+function generateConstellationScreenshotsWithoutLinesWithOtherConstellationsVisible(constellation, numberOfShots, zoomLevelBase, invert) {
+	// Pokazuje tylko linie, etykiety lub granice wybranej konstelacji, ale inne gwiazdy wciąż są widoczne.
+	ConstellationMgr.setFlagIsolateSelected(false);
+
+	// Ukrywa wszystkie gwiazdy i obiekty poza wybraną konstelacją i jej gwiazdami.
+	ConstellationMgr.setFlagConstellationPick(false);
+
+	// Wyświetla linie konstelacji
+	ConstellationMgr.setFlagLines(false);
+
+	// Wybieramy konstelację o danej nazwie
+	core.selectConstellationByName(constellation);
+
+	// Skocz do konstelacji (x sekund).
+	core.moveToSelectedObject(1);
+
+	for (shot = 0; shot < numberOfShots; shot++) {
+		var randomDate = getRandomDate();
+		var randomLocation = getRandomLocation();
+		var latitudePos = randomLocation[0];
+		var longitudePos = randomLocation[1];
+		var altitudePos = randomLocation[2];
+
+		// Ustaw lokalizację obserwatora
+		core.setObserverLocation(latitudePos, longitudePos, altitudePos, 0, "RandomLocation", "Earth");
+	
+		// Ustaw datę i godzinę
+		core.setDate(randomDate);
+		
+		var zoomLevel = zoomLevelBase + shot; 
+
+		// Ustaw kamerę
+		// Przybliżenie do x stopni w czasie y sekund
+		StelMovementMgr.zoomTo(zoomLevel, 0.5);
+
+		core.wait(0.5);
+
+		// Zapisz zdjęcie do domyślnego katalogu
+		core.screenshot(prefix=constellation + "-", invert=invert, format='png');
+	}
+
+	ConstellationMgr.deselectConstellation(constellation);
+}
+
+// Czyści widok, usuwając wszystkie etykiety i efekty.
+core.clear("deepspace");
+// Wyłącza siatkę równikową.
+GridLinesMgr.setFlagEquatorGrid(false);
+// Wyłącza podpowiedzi dotyczące mgławic.
+NebulaMgr.setFlagHints(false);
+//  Wyświetlanie rysunków konstelacji.
+ConstellationMgr.setFlagArt(false);
+// Wyświetlanie granic konstelacji.
+ConstellationMgr.setFlagBoundaries(false);
+// Wyświetlanie nazw konstelacji.
+ConstellationMgr.setFlagLabels(false);
+// Wyłącza etykiety planet.
+SolarSystem.setFlagLabels(false);
+// Wyłącza planety.
+SolarSystem.setFlagPlanets(false);
+// Wyłącza podpowiedzi dotyczące satelitów.
+Satellites.setFlagHintsVisible(false);
+// Wyłącza etykiety satelitów.
+Satellites.setFlagLabelsVisible(false);
+// wyłącza markery meteorów.
+MeteorShowers.setEnableMarker(false);
+// Wyłącza etykiety meteorów.
+MeteorShowers.setEnableLabels(false);
+// Wyłącza sporadyczne meteory.
+SporadicMeteorMgr.setFlagShow(false);
+// Ukrywa interfejs użytkownika.
+core.setGuiVisible(false);
+
+// Lista konstelacji
+constellations = ConstellationMgr.getConstellationsEnglishNames();
+
+// Liczba zdjęć na konstelację w zależności od
+var numberOfShotsWithLinesWithOtherConstellationsVisible = 25;
+var numberOfShotsWithoutLinesWithOtherConstellationsVisible = 75;
+
+var numberOfShotsWithoutLinesWithOtherConstellationsVisibleButInverted = 25;
+
+var zoomLevelBase = 30;
+
+for (i = 0; i < constellations.length; i++) {
+	var constellation = constellations[i];
+
+	//generateConstellationScreenshotsWithLinesWithOtherConstellationsVisible(constellation, numberOfShotsWithLinesWithOtherConstellationsVisible, zoomLevelBase, false);
+	generateConstellationScreenshotsWithoutLinesWithOtherConstellationsVisible(constellation, numberOfShotsWithoutLinesWithOtherConstellationsVisible, zoomLevelBase, false);
+
+	// Do generowania zinvertowanych
+	//generateConstellationScreenshotsWithLinesWithOtherConstellationsVisible(constellation, numberOfShotsWithoutLinesWithOtherConstellationsVisibleButInverted, zoomLevelBase, true);
+	generateConstellationScreenshotsWithoutLinesWithOtherConstellationsVisible(constellation, numberOfShotsWithoutLinesWithOtherConstellationsVisibleButInverted, zoomLevelBase, true);
+}
+
+// Show UI i przywróć naturalny wygląd nieba
+core.setGuiVisible(true);
+core.clear("natural");
+
+LabelMgr.labelScreen("The script has finished running", 200, 200, true, 20, "#ff0000")

@@ -1,15 +1,20 @@
 import os
 import logging
 import random
+import tensorflow as tf
+import numpy as np
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from supabase import create_client
+from PIL import Image
 
 from config import Config
 from services.storage import upload_file_to_storage
 from services.database import insert_prediction, fetch_history, delete_prediction
 from utils.validation import allowed_file
+from ml.ml_config import MLConfig
+from ml.inference.predictor import Predictor
 
 # Setup Flask
 app = Flask(__name__)
@@ -22,12 +27,17 @@ logger = logging.getLogger(__name__)
 # Supabase client
 sb = create_client(Config.SUPABASE_URL, Config.SUPABASE_KEY)
 
-@app.route('/')
+# Initialize the model
+predictor = Predictor(MLConfig.MODEL_PATH)
+
+
+@app.route("/")
 def home():
     """
     A basic route to confirm the application is running.
     """
     return "Hello, friend! Welcome to the Constellation Recognizer 6001X Deluxe API!"
+
 
 @app.route("/api/predict", methods=["POST"])
 def predict():
@@ -46,32 +56,48 @@ def predict():
     3. Perform a prediction using the model.
     4. Save prediction details to the database.
     5. Return the prediction result.
-    """    
+    """
     file = request.files.get("image")
     user_id = request.form.get("user_id")
     model_id = request.form.get("model_id", "cnn")
 
     # Validate input
     if not file or not user_id:
+        logger.error("Missing file or user_id in the request.")
         return jsonify({"error": "Missing file or user_id"}), 400
+
+    # Validate file type
     if not allowed_file(file.filename):
-        return jsonify({"error": "Invalid file type. Only JPG, JPEG, PNG allowed."}), 400
+        logger.error("Invalid file type provided.")
+        return (
+            jsonify({"error": "Invalid file type. Only JPG, JPEG, PNG allowed."}),
+            400,
+        )
 
     # Upload file to storage
     public_url, error = upload_file_to_storage(sb, Config.BUCKET_NAME, file, user_id)
     if error:
+        logger.error(f"File upload to storage failed: {error}")
         return jsonify({"error": error}), 500
 
-    # Mock prediction (replace with actual ML model logic)
-    possible_labels = ["Orion", "Cassiopeia", "Ursa Major"]
-    label = random.choice(possible_labels)
+    # Make prediction
+    try:
+        predicted_class, confidence = predictor.predict(file)
+    except Exception as e:
+        logger.error(f"Error making prediction: {e}")
+        return jsonify({"error": "Error making prediction"}), 500
 
     # Save prediction to database
-    success, error = insert_prediction(sb, Config.TABLE_NAME, user_id, file.filename, public_url, label)
+    success, error = insert_prediction(
+        sb, Config.TABLE_NAME, user_id, file.filename, public_url, predicted_class
+    )
     if not success:
+        logger.error(f"Failed to save prediction to database: {error}")
         return jsonify({"error": error}), 500
 
-    return jsonify({"label": label, "file_url": public_url})
+    return jsonify(
+        {"label": predicted_class, "confidence": confidence, "file_url": public_url}
+    )
 
 
 @app.route("/api/history", methods=["GET"])
@@ -95,6 +121,7 @@ def get_history():
 
     return jsonify(history), 200
 
+
 @app.route("/api/history/<int:pred_id>", methods=["DELETE"])
 def delete_history_item(pred_id):
     """
@@ -106,7 +133,9 @@ def delete_history_item(pred_id):
     3. Remove the file from Supabase Storage.
     4. Delete the record from the database.
     """
-    response, error = delete_prediction(sb, Config.TABLE_NAME, Config.BUCKET_NAME, pred_id)
+    response, error = delete_prediction(
+        sb, Config.TABLE_NAME, Config.BUCKET_NAME, pred_id
+    )
 
     if error:
         if error == "Prediction not found":
@@ -114,6 +143,7 @@ def delete_history_item(pred_id):
         return jsonify({"error": error}), 500
 
     return jsonify(response), 200
+
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
