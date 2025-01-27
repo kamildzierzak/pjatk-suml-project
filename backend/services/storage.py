@@ -7,9 +7,11 @@ from supabase import Client
 
 logger = logging.getLogger(__name__)
 
+
 def sanitize_user_id(user_id):
     """Sanitize user_id to remove invalid characters for filenames."""
     return re.sub(r"[^a-zA-Z0-9_-]", "_", user_id)
+
 
 def upload_file_to_storage(sb: Client, bucket_name: str, file, user_id: str):
     """Upload a file to Supabase Storage and return its public URL."""
