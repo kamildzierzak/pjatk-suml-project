@@ -8,13 +8,13 @@ MODELS_DIR = os.path.join(BASE_DIR, "ml", "models")
 SCRIPTS_DIR = os.path.join(BASE_DIR, "ml", "scripts")
 
 # Data and processing parameters
-IMG_SIZE = 224
-BATCH_SIZE = 24
+IMG_SIZE = 112
+BATCH_SIZE = 8
 VALIDATION_SPLIT = 0.2
 
 # Model training parameters
 EPOCHS = 8
-EPOCHS_FINE_TUNE = 4
+EPOCHS_FINE_TUNE = 8
 LEARNING_RATE = 0.0001
 FINE_TUNE_LR = 0.00001
 
@@ -45,7 +45,7 @@ BACKBONES = {
     },
 }
 
-DEFAULT_BACKBONE = "resnet"
+DEFAULT_BACKBONE = "efficientnet"
 
 # Lista konstelacji: łacińska nazwa, skrót łaciński, polska nazwa
 # https://teleskopy.pl/gwiazdozbiory.html

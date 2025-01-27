@@ -1,6 +1,5 @@
 import os
 import logging
-import random
 import tensorflow as tf
 import numpy as np
 
@@ -15,6 +14,11 @@ from services.database import insert_prediction, fetch_history, delete_predictio
 from utils.validation import allowed_file
 from ml.ml_config import MLConfig
 from ml.inference.predictor import Predictor
+
+import random
+
+# Disable GPU
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 # Setup Flask
 app = Flask(__name__)

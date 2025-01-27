@@ -52,11 +52,16 @@ def create_data_generators(preprocess_input):
     """
     datagen = ImageDataGenerator(
         preprocessing_function=preprocess_input,
-        validation_split=0.2,
+        validation_split=0.3,
         horizontal_flip=True,
-        rotation_range=5,
-        zoom_range=0.2,
-        brightness_range=[0.9, 1.1],
+        vertical_flip=True,
+        rotation_range=180,
+        zoom_range=0.3,
+        channel_shift_range=25.0,
+        brightness_range=[0.7, 1.3],
+        shear_range=0.2,
+        width_shift_range=0.2,
+        height_shift_range=0.2,
     )
 
     train_generator = datagen.flow_from_directory(
@@ -90,15 +95,16 @@ def build_model(base_model, num_classes):
         [
             base_model,  # Add the pre-trained base model
             layers.GlobalAveragePooling2D(),  # Global Average Pooling layer to reduce dimensions
+            layers.Dropout(0.35),
             layers.BatchNormalization(),  # Batch normalization layer
             layers.Dense(
-                256,
-                activation="relu",
-                kernel_regularizer=tf.keras.regularizers.l2(0.01),
-            ),
-            layers.Dropout(0.50),
-            layers.Dense(
                 128,
+                activation="relu",
+                kernel_regularizer=tf.keras.regularizers.l2(0.02),
+            ),
+            layers.Dropout(0.5),
+            layers.Dense(
+                64,
                 activation="relu",
                 kernel_regularizer=tf.keras.regularizers.l2(0.01),
             ),
@@ -120,6 +126,8 @@ def train_model(backbone_name=DEFAULT_BACKBONE):
     """
     base_model, preprocess_input = load_backbone(backbone_name)
     train_generator, validation_generator = create_data_generators(preprocess_input)
+
+    print(train_generator.class_indices, len(train_generator.class_indices))
 
     model = build_model(base_model, len(train_generator.class_indices))
 
@@ -151,7 +159,7 @@ def train_model(backbone_name=DEFAULT_BACKBONE):
     plot_training_history(history)
 
     # Fine-tune: Unfreeze some layers of the pre-trained model
-    for layer in base_model.layers[-30:]:
+    for layer in base_model.layers[-10:]:
         layer.trainable = True
 
     # Recompile the model after unfreezing
