@@ -8,8 +8,8 @@ MODELS_DIR = os.path.join(BASE_DIR, "ml", "models")
 SCRIPTS_DIR = os.path.join(BASE_DIR, "ml", "scripts")
 
 # Data and processing parameters
-IMG_SIZE = 112
-BATCH_SIZE = 8
+IMG_SIZE = 96
+BATCH_SIZE = 4
 VALIDATION_SPLIT = 0.2
 
 # Model training parameters
@@ -45,7 +45,7 @@ BACKBONES = {
     },
 }
 
-DEFAULT_BACKBONE = "efficientnet"
+DEFAULT_BACKBONE = "mobilenet"
 
 # Lista konstelacji: łacińska nazwa, skrót łaciński, polska nazwa
 # https://teleskopy.pl/gwiazdozbiory.html

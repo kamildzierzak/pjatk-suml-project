@@ -1,12 +1,9 @@
 import os
 import logging
-import tensorflow as tf
-import numpy as np
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from supabase import create_client
-from PIL import Image
 
 from config import Config
 from services.storage import upload_file_to_storage
@@ -14,8 +11,6 @@ from services.database import insert_prediction, fetch_history, delete_predictio
 from utils.validation import allowed_file
 from ml.ml_config import MLConfig
 from ml.inference.predictor import Predictor
-
-import random
 
 # Disable GPU
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
