@@ -5,39 +5,27 @@ import matplotlib.pyplot as plt
 from tensorflow.keras import layers, models
 from tensorflow.keras.callbacks import EarlyStopping
 from ml.scripts.visualization import plot_training_history
+from ml.config import MODELS_DIR, IMG_SIZE, BATCH_SIZE, EPOCHS, CLASS_NAMES
 
 if __name__ == "__main__":
-    data_dir = os.path.abspath("data/constellations")
-    output_dir = os.path.abspath("models")
-
-    # Parameters for image size and batch size
-    batch_size = 16
-    img_height = 224
-    img_width = 224
-    epochs = 32
-
     # Loading training and validation datasets with 8/2 ratio
     train_ds = tf.keras.preprocessing.image_dataset_from_directory(
-        data_dir,
+        MODELS_DIR,
         validation_split=0.2,
         subset="training",
         seed=123,
-        image_size=(img_height, img_width),
-        batch_size=batch_size,
+        image_size=(IMG_SIZE, IMG_SIZE),
+        batch_size=BATCH_SIZE,
     )
 
     val_ds = tf.keras.preprocessing.image_dataset_from_directory(
-        data_dir,
+        MODELS_DIR,
         validation_split=0.2,
         subset="validation",
         seed=123,
-        image_size=(img_height, img_width),
-        batch_size=batch_size,
+        image_size=(IMG_SIZE, IMG_SIZE),
+        batch_size=BATCH_SIZE,
     )
-
-    # Get the class names from the dataset
-    class_names = train_ds.class_names
-    print("Class names:", class_names)
 
     # Improve performance by caching and prefetching the datasets
     AUTOTUNE = tf.data.AUTOTUNE
@@ -62,13 +50,13 @@ if __name__ == "__main__":
     train_ds = train_ds.map(lambda x, y: (data_augmentation(normalization_layer(x)), y))
     val_ds = val_ds.map(lambda x, y: (normalization_layer(x), y))
 
-    num_classes = len(class_names)
+    num_classes = len(CLASS_NAMES)
 
     # Build the model
     model = models.Sequential(
         [
             layers.Conv2D(
-                32, (3, 3), activation="relu", input_shape=(img_height, img_width, 3)
+                32, (3, 3), activation="relu", input_shape=(IMG_SIZE, IMG_SIZE, 3)
             ),
             layers.MaxPooling2D((2, 2)),
             layers.Conv2D(64, (3, 3), activation="relu"),
@@ -97,13 +85,13 @@ if __name__ == "__main__":
 
     # Train the model
     history = model.fit(
-        train_ds, validation_data=val_ds, epochs=epochs, callbacks=[early_stopping]
+        train_ds, validation_data=val_ds, epochs=EPOCHS, callbacks=[early_stopping]
     )
 
     # Visualize the training progress
     plot_training_history(history)
 
     # Save the trained model
-    model.save(os.path.join(output_dir, "cnn_model.h5"))
+    model.save(os.path.join(MODELS_DIR, "cnn_model.h5"))
 
     # TODO - Probably we should evaluate the model on the test set here
