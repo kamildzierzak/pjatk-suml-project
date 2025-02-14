@@ -4,27 +4,13 @@
 
 | Service  | Status                                                                                                                                                                     |
 | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Frontend | [![Netlify Status](https://api.netlify.com/api/v1/badges/38d745a6-3000-43ee-bed7-ecdd35d60ad1/deploy-status)](https://app.netlify.com/sites/resonant-chaja-d637bc/deploys) |
-| Backend  | Render Badge 🥷                                                                                                                                                            |
-| Database | Supabase Badge 🥷                                                                                                                                                          |
-
-## Opis projektu
-
-```
-TODO
-```
-
-## Struktura projektu
-
-```
-TODO
-```
+| Frontend | ⏸️ Netlify Paused |
+| Backend  | ⏸️ Render Paused |
+| Database | ⏸️ Supabase Paused |
 
 ## Dataset
 
-1. [Dataset on GDrive](https://drive.google.com/drive/folders/17p_7q_MO6bWPaR_-Bg7lNkkfmHNYE4V7?usp=sharing)
-
-By utworzyć więcej danych, można w programie [Stellarium 23.4](https://stellarium.org/) odpalić console (F12) i użyć skryptu 'create_dataset_from_stellarium.ssc'.
+We used photos of constellations taken in Stellarium and Creative Commons-licensed free photos from the web.
 
 ## Extra links
 
